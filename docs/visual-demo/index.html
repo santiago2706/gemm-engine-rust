@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Matrix Engine — Simulador Visual</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<header class="app-header">
+  <h1>AI Matrix Engine</h1>
+  <p class="subtitle">Simulador visual de cómo las optimizaciones de arquitectura aceleran la multiplicación de matrices</p>
+</header>
+
+<nav class="strategy-menu" id="strategy-menu">
+  <button class="strategy-btn active" data-strategy="base">1. Base</button>
+  <button class="strategy-btn" data-strategy="simd">2. SIMD</button>
+  <button class="strategy-btn" data-strategy="cache">3. Cache Blocking</button>
+  <button class="strategy-btn" data-strategy="parallel">4. Parallel</button>
+</nav>
+
+<main>
+
+  <section class="panel intro-panel">
+    <h2>¿Qué es esto?</h2>
+    <p>
+      La multiplicación de matrices (<strong>GEMM</strong>, General Matrix Multiply) es la operación que más tiempo
+      consume al entrenar o ejecutar un modelo de IA: capas densas, atención y convoluciones se reducen, en el fondo,
+      a multiplicar matrices muy grandes una y otra vez. Por eso, acelerar esta única operación acelera el modelo entero.
+    </p>
+    <p>
+      El resultado matemático es siempre el mismo; lo que cambia es <strong>cómo el hardware organiza el trabajo</strong>
+      para llegar a él. Esta demo simula (no mide de verdad) cuatro formas de hacerlo, para que se note la diferencia
+      de velocidad entre una versión ingenua y las optimizadas.
+    </p>
+    <div class="table-wrap">
+      <table class="compare-table">
+        <thead>
+          <tr><th>Estrategia</th><th>Qué optimiza</th><th>Unidad de trabajo</th><th>Pasos en esta demo</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Base</td><td>—</td><td>1 multiplicación</td><td>64</td></tr>
+          <tr><td>SIMD</td><td>Cómputo (ancho de instrucción)</td><td>1 fila × 1 columna a la vez</td><td>16</td></tr>
+          <tr><td>Cache Blocking</td><td>Accesos a memoria</td><td>bloque de 2×2 reutilizado</td><td>64 (8 lecturas RAM + 56 aciertos de caché)</td></tr>
+          <tr><td>Parallel</td><td>Cómputo (núcleos)</td><td>4 filas a la vez, una por núcleo</td><td>16</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="panel definition-panel">
+    <h2 id="def-title">Base</h2>
+    <p id="def-text">Procesa un dato a la vez, de forma estrictamente secuencial.</p>
+    <div class="diagram" id="def-diagram"></div>
+    <div class="def-detail">
+      <div>
+        <h4>En esta demo</h4>
+        <p id="def-demo"></p>
+      </div>
+      <div>
+        <h4>En hardware real</h4>
+        <p id="def-real"></p>
+      </div>
+    </div>
+    <div class="core-panel" id="core-panel"></div>
+  </section>
+
+  <section class="panel matrices-panel">
+    <h2>Multiplicación paso a paso</h2>
+    <div class="matrices-row">
+      <div class="matrix-block">
+        <h3>Matriz A</h3>
+        <div class="grid" id="grid-a"></div>
+      </div>
+      <div class="matrix-op">×</div>
+      <div class="matrix-block">
+        <h3>Matriz B</h3>
+        <div class="grid" id="grid-b"></div>
+      </div>
+      <div class="matrix-op">=</div>
+      <div class="matrix-block">
+        <h3>Resultado</h3>
+        <div class="grid" id="grid-r"></div>
+      </div>
+    </div>
+
+    <div class="progress-row">
+      <span id="step-counter">Paso 0 / 0</span>
+      <span id="strategy-meta"></span>
+    </div>
+
+    <div class="time-bar-wrap">
+      <div class="time-bar-track">
+        <div class="time-bar-fill" id="time-bar-fill" style="width:0%"></div>
+      </div>
+      <span id="time-bar-label">0.0 ms / 0 ms simulados</span>
+    </div>
+
+    <div class="step-explanation" id="step-explanation">
+      Presiona <strong>Siguiente paso</strong> para comenzar.
+    </div>
+
+    <div class="controls">
+      <button id="btn-reset">Reiniciar</button>
+      <button id="btn-prev">◀ Anterior</button>
+      <button id="btn-next">Siguiente paso ▶</button>
+      <button id="btn-play">▶ Reproducir automático</button>
+    </div>
+  </section>
+
+  <section class="panel benchmark-panel">
+    <h2>Benchmark simulado</h2>
+    <p class="hint">Valores simulados para fines demostrativos, no una medición real.</p>
+    <div class="bench-grid">
+      <div class="bench-card">
+        <h3>Base</h3>
+        <p>Tiempo: <span>125 ms</span></p>
+        <p>GFLOPS: <span>2.1</span></p>
+      </div>
+      <div class="bench-card">
+        <h3>SIMD</h3>
+        <p>Tiempo: <span>55 ms</span></p>
+        <p>GFLOPS: <span>4.8</span></p>
+        <p>Speedup: <span>2.2x</span></p>
+      </div>
+      <div class="bench-card">
+        <h3>Blocked</h3>
+        <p>Tiempo: <span>31 ms</span></p>
+        <p>GFLOPS: <span>8.4</span></p>
+        <p>Speedup: <span>4.0x</span></p>
+      </div>
+      <div class="bench-card">
+        <h3>Parallel</h3>
+        <p>Tiempo: <span>15 ms</span></p>
+        <p>GFLOPS: <span>17</span></p>
+        <p>Speedup: <span>8x</span></p>
+      </div>
+    </div>
+
+    <div class="charts">
+      <div class="chart">
+        <h3>Tiempo (menor es mejor)</h3>
+        <div class="bar-row"><span class="bar-label">Base</span><div class="bar" style="width:100%">125 ms</div></div>
+        <div class="bar-row"><span class="bar-label">SIMD</span><div class="bar" style="width:44%">55 ms</div></div>
+        <div class="bar-row"><span class="bar-label">Blocked</span><div class="bar" style="width:25%">31 ms</div></div>
+        <div class="bar-row"><span class="bar-label">Parallel</span><div class="bar" style="width:12%">15 ms</div></div>
+      </div>
+      <div class="chart">
+        <h3>Rendimiento GFLOPS (mayor es mejor)</h3>
+        <div class="bar-row"><span class="bar-label">Base</span><div class="bar perf" style="width:12%">2.1</div></div>
+        <div class="bar-row"><span class="bar-label">SIMD</span><div class="bar perf" style="width:28%">4.8</div></div>
+        <div class="bar-row"><span class="bar-label">Blocked</span><div class="bar perf" style="width:49%">8.4</div></div>
+        <div class="bar-row"><span class="bar-label">Parallel</span><div class="bar perf" style="width:100%">17</div></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel conclusion-panel">
+    <h2>Conclusión</h2>
+    <ul>
+      <li>✔ Todas las estrategias producen el mismo resultado.</li>
+      <li>✔ SIMD procesa varios datos simultáneamente.</li>
+      <li>✔ Cache Blocking reduce accesos a memoria.</li>
+      <li>✔ Parallel usa múltiples núcleos.</li>
+    </ul>
+    <p>Estas son las mismas técnicas utilizadas para acelerar las multiplicaciones de matrices en modelos de IA.</p>
+  </section>
+
+</main>
+
+<script src="script.js"></script>
+</body>
+</html>
