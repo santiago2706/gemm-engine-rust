@@ -29,11 +29,12 @@ Al iniciar, el programa muestra un menú:
 2. SIMD
 3. Cache Blocking
 4. Parallel
+5. Modo Web (benchmark real)
 
 Seleccione:
 ```
 
-Escribe el número de la estrategia que quieras simular (`1`, `2`, `3` o `4`) y presiona Enter.
+Escribe el número de la estrategia que quieras simular (`1`, `2`, `3` o `4`) y presiona Enter, o elige `5` para el modo web (ver más abajo).
 
 ## Qué muestra cada ejecución
 
@@ -46,16 +47,31 @@ Tras elegir una opción, el programa ejecuta en orden:
 5. **Gráficos ASCII** — barras comparando tiempo y rendimiento.
 6. **Conclusión** — resumen de las técnicas y su relación con la aceleración de IA.
 
-## Demo visual (navegador)
+## Demo visual (navegador) con benchmark real
 
-Además de la terminal, hay una versión gráfica e interactiva en [`docs/visual-demo/index.html`](visual-demo/index.html). Ábrela directamente con doble clic (o "Abrir con navegador") para:
+Hay una versión gráfica e interactiva del proyecto en [`docs/visual-demo/`](visual-demo/). A diferencia de una página suelta, ahora se sirve desde el propio programa Rust y el benchmark que muestra **corre de verdad**, no son números fijos.
 
-- Elegir una estrategia y leer su definición con un diagrama.
-- Avanzar paso a paso (o reproducir automáticamente) la multiplicación 4x4, viendo qué celdas de A y B se leen y cómo se acumula el resultado.
-- Ver el benchmark simulado y los gráficos de barras de tiempo/rendimiento.
-- Leer la conclusión final.
+Para usarla:
 
-No requiere servidor ni dependencias, es HTML/CSS/JS autocontenido.
+```bash
+cargo run --release
+```
+
+y elige la opción `5. Modo Web (benchmark real)`. La terminal mostrará:
+
+```
+Servidor web activo en http://127.0.0.1:7878
+```
+
+Abre esa dirección en el navegador (no abras `index.html` directamente con doble clic — necesita el servidor para responder al benchmark). Ahí encontrarás:
+
+- La explicación conceptual de GEMM y una tabla comparativa de las 4 estrategias.
+- La definición de cada estrategia, con diagrama, "qué simula esta demo" y "qué es en hardware real".
+- La multiplicación 4×4 paso a paso (esta parte sigue siendo una simulación pedagógica: anima cómo se leen y acumulan los datos).
+- Un **benchmark real**: eliges el tamaño de matriz (128 a 1024) y el servidor ejecuta ahí mismo, en Rust (`src/engine.rs`), las 4 implementaciones —Base (bucle ingenuo), SIMD (reordenado para auto-vectorización), Cache Blocking (bloqueado por tiles) y Parallel (repartido en hilos reales con `std::thread::scope`)— midiendo el tiempo real con `Instant::now()` y verificando que las 4 dan el mismo resultado (checksum).
+- Usa `--release` para ver diferencias de velocidad marcadas: en modo debug el compilador no vectoriza ni optimiza, así que SIMD/Cache Blocking no muestran su ventaja real.
+
+Detén el servidor con `Ctrl+C` en la terminal donde corre `cargo run`.
 
 ## Pruebas
 

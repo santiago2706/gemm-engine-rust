@@ -405,7 +405,73 @@ main {
 .hint {
   color: var(--text-dim);
   font-size: 0.85rem;
-  margin-top: -0.5rem;
+}
+
+.hint code {
+  background: #1f2440;
+  border-radius: 4px;
+  padding: 0.1rem 0.35rem;
+  font-family: "Cascadia Code", Consolas, monospace;
+}
+
+.bench-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  margin: 1rem 0;
+}
+
+.bench-controls label {
+  color: var(--text-dim);
+  font-size: 0.9rem;
+}
+
+.bench-controls select {
+  background: #1f2440;
+  border: 1px solid var(--panel-border);
+  color: var(--text);
+  padding: 0.4rem 0.6rem;
+  border-radius: 6px;
+}
+
+.bench-controls button {
+  background: var(--accent-2);
+  color: #0f1220;
+  border: none;
+  font-weight: 600;
+  padding: 0.55rem 1.1rem;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.bench-controls button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.bench-status {
+  color: var(--text-dim);
+  font-size: 0.85rem;
+  min-height: 1.2rem;
+}
+
+.bench-status.error {
+  color: var(--danger);
+}
+
+.bench-status.ok {
+  color: var(--accent);
+}
+
+.bench-card .badge {
+  display: inline-block;
+  margin-top: 0.4rem;
+  font-size: 0.75rem;
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  background: rgba(110, 231, 183, 0.15);
+  color: var(--accent);
 }
 
 .bench-grid {

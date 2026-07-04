@@ -453,3 +453,89 @@ document.getElementById("strategy-menu").addEventListener("click", (e) => {
 renderStaticGrid(gridA, A, "a");
 renderStaticGrid(gridB, B, "b");
 selectStrategy("base");
+
+// --- Benchmark real (fetch al servidor Rust) ---
+
+const STRATEGY_LABELS = { base: "Base", simd: "SIMD", cache: "Cache Blocking", parallel: "Parallel" };
+
+const benchGrid = document.getElementById("bench-grid");
+const benchCharts = document.getElementById("bench-charts");
+const chartTime = document.getElementById("chart-time");
+const chartPerf = document.getElementById("chart-perf");
+const benchStatus = document.getElementById("bench-status");
+const btnRunBenchmark = document.getElementById("btn-run-benchmark");
+const matrixSizeSelect = document.getElementById("matrix-size");
+
+function renderBenchResults(results, n) {
+  const baseResult = results.find((r) => r.strategy === "base") || results[0];
+  const allMatch = results.every((r) => r.matches_base !== false);
+
+  benchGrid.innerHTML = results
+    .map((r) => {
+      const speedup = baseResult.elapsed_ms > 0 ? baseResult.elapsed_ms / r.elapsed_ms : 1;
+      const speedupRow = r.strategy === "base" ? "" : `<p>Speedup: <span>${speedup.toFixed(1)}x</span></p>`;
+      return `
+        <div class="bench-card">
+          <h3>${STRATEGY_LABELS[r.strategy] || r.strategy}</h3>
+          <p>Tiempo: <span>${r.elapsed_ms.toFixed(2)} ms</span></p>
+          <p>GFLOPS: <span>${r.gflops.toFixed(2)}</span></p>
+          ${speedupRow}
+        </div>
+      `;
+    })
+    .join("");
+
+  const maxTime = Math.max(...results.map((r) => r.elapsed_ms), 0.001);
+  const maxGflops = Math.max(...results.map((r) => r.gflops), 0.001);
+
+  chartTime.innerHTML = results
+    .map(
+      (r) => `
+      <div class="bar-row">
+        <span class="bar-label">${STRATEGY_LABELS[r.strategy] || r.strategy}</span>
+        <div class="bar" style="width:${Math.max(4, (r.elapsed_ms / maxTime) * 100)}%">${r.elapsed_ms.toFixed(1)} ms</div>
+      </div>
+    `
+    )
+    .join("");
+
+  chartPerf.innerHTML = results
+    .map(
+      (r) => `
+      <div class="bar-row">
+        <span class="bar-label">${STRATEGY_LABELS[r.strategy] || r.strategy}</span>
+        <div class="bar perf" style="width:${Math.max(4, (r.gflops / maxGflops) * 100)}%">${r.gflops.toFixed(2)}</div>
+      </div>
+    `
+    )
+    .join("");
+
+  benchCharts.style.display = "grid";
+  benchStatus.textContent = allMatch
+    ? `✔ Medición real completada (N=${n}). Las 4 estrategias produjeron el mismo resultado (checksum verificado).`
+    : `⚠ Medición completada (N=${n}), pero los checksums no coinciden exactamente (posible acumulación de error de punto flotante).`;
+  benchStatus.className = allMatch ? "bench-status ok" : "bench-status error";
+}
+
+async function runRealBenchmark() {
+  const n = matrixSizeSelect.value;
+  btnRunBenchmark.disabled = true;
+  benchStatus.className = "bench-status";
+  benchStatus.textContent = `Ejecutando multiplicación real de matrices ${n}×${n} en las 4 estrategias (esto corre en Rust, puede tardar unos segundos)...`;
+  benchCharts.style.display = "none";
+
+  try {
+    const res = await fetch(`/api/benchmark/all?n=${encodeURIComponent(n)}`);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const results = await res.json();
+    renderBenchResults(results, n);
+  } catch (err) {
+    benchStatus.className = "bench-status error";
+    benchStatus.textContent =
+      'No se pudo conectar con el servidor Rust. Ejecuta "cargo run" (o "cargo run --release"), elige la opción 5 y abre http://127.0.0.1:7878 en vez de abrir este archivo directamente.';
+  } finally {
+    btnRunBenchmark.disabled = false;
+  }
+}
+
+btnRunBenchmark.addEventListener("click", runRealBenchmark);

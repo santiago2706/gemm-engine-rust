@@ -110,48 +110,37 @@
   </section>
 
   <section class="panel benchmark-panel">
-    <h2>Benchmark simulado</h2>
-    <p class="hint">Valores simulados para fines demostrativos, no una medición real.</p>
-    <div class="bench-grid">
-      <div class="bench-card">
-        <h3>Base</h3>
-        <p>Tiempo: <span>125 ms</span></p>
-        <p>GFLOPS: <span>2.1</span></p>
-      </div>
-      <div class="bench-card">
-        <h3>SIMD</h3>
-        <p>Tiempo: <span>55 ms</span></p>
-        <p>GFLOPS: <span>4.8</span></p>
-        <p>Speedup: <span>2.2x</span></p>
-      </div>
-      <div class="bench-card">
-        <h3>Blocked</h3>
-        <p>Tiempo: <span>31 ms</span></p>
-        <p>GFLOPS: <span>8.4</span></p>
-        <p>Speedup: <span>4.0x</span></p>
-      </div>
-      <div class="bench-card">
-        <h3>Parallel</h3>
-        <p>Tiempo: <span>15 ms</span></p>
-        <p>GFLOPS: <span>17</span></p>
-        <p>Speedup: <span>8x</span></p>
-      </div>
+    <h2>Benchmark real (ejecutado en Rust)</h2>
+    <p class="hint">
+      Este benchmark corre de verdad en el servidor Rust: genera matrices reales del tamaño elegido y mide el tiempo
+      con <code>Instant::now()</code> para las 4 implementaciones (<code>src/engine.rs</code>). Para ver diferencias
+      más marcadas entre SIMD y Cache Blocking, ejecuta el programa con <code>cargo run --release</code>.
+    </p>
+
+    <div class="bench-controls">
+      <label for="matrix-size">Tamaño de matriz (N × N):</label>
+      <select id="matrix-size">
+        <option value="128">128</option>
+        <option value="256" selected>256</option>
+        <option value="512">512</option>
+        <option value="768">768</option>
+        <option value="1024">1024</option>
+      </select>
+      <button id="btn-run-benchmark">▶ Ejecutar benchmark real</button>
     </div>
 
-    <div class="charts">
+    <p class="bench-status" id="bench-status">Aún no se ha ejecutado. Presiona "Ejecutar benchmark real".</p>
+
+    <div class="bench-grid" id="bench-grid"></div>
+
+    <div class="charts" id="bench-charts" style="display:none;">
       <div class="chart">
         <h3>Tiempo (menor es mejor)</h3>
-        <div class="bar-row"><span class="bar-label">Base</span><div class="bar" style="width:100%">125 ms</div></div>
-        <div class="bar-row"><span class="bar-label">SIMD</span><div class="bar" style="width:44%">55 ms</div></div>
-        <div class="bar-row"><span class="bar-label">Blocked</span><div class="bar" style="width:25%">31 ms</div></div>
-        <div class="bar-row"><span class="bar-label">Parallel</span><div class="bar" style="width:12%">15 ms</div></div>
+        <div id="chart-time"></div>
       </div>
       <div class="chart">
         <h3>Rendimiento GFLOPS (mayor es mejor)</h3>
-        <div class="bar-row"><span class="bar-label">Base</span><div class="bar perf" style="width:12%">2.1</div></div>
-        <div class="bar-row"><span class="bar-label">SIMD</span><div class="bar perf" style="width:28%">4.8</div></div>
-        <div class="bar-row"><span class="bar-label">Blocked</span><div class="bar perf" style="width:49%">8.4</div></div>
-        <div class="bar-row"><span class="bar-label">Parallel</span><div class="bar perf" style="width:100%">17</div></div>
+        <div id="chart-perf"></div>
       </div>
     </div>
   </section>

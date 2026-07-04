@@ -4,6 +4,7 @@ use crate::benchmark;
 use crate::matrix::Matrix;
 use crate::simulation;
 use crate::visualizer;
+use crate::webserver;
 
 pub enum EngineVersion {
     Base,
@@ -12,14 +13,20 @@ pub enum EngineVersion {
     Parallel,
 }
 
+enum Choice {
+    Version(EngineVersion),
+    WebMode,
+}
+
 pub fn run() {
     print_menu();
-    let version = loop {
+    let choice = loop {
         match read_choice() {
-            Some(1) => break EngineVersion::Base,
-            Some(2) => break EngineVersion::Simd,
-            Some(3) => break EngineVersion::CacheBlocking,
-            Some(4) => break EngineVersion::Parallel,
+            Some(1) => break Choice::Version(EngineVersion::Base),
+            Some(2) => break Choice::Version(EngineVersion::Simd),
+            Some(3) => break Choice::Version(EngineVersion::CacheBlocking),
+            Some(4) => break Choice::Version(EngineVersion::Parallel),
+            Some(5) => break Choice::WebMode,
             _ => {
                 print!("Opción inválida. Seleccione: ");
                 io::stdout().flush().unwrap();
@@ -27,7 +34,10 @@ pub fn run() {
         }
     };
 
-    execute(version);
+    match choice {
+        Choice::Version(version) => execute(version),
+        Choice::WebMode => webserver::run(),
+    }
 }
 
 fn print_menu() {
@@ -37,7 +47,8 @@ fn print_menu() {
     println!("1. Base");
     println!("2. SIMD");
     println!("3. Cache Blocking");
-    println!("4. Parallel\n");
+    println!("4. Parallel");
+    println!("5. Modo Web (benchmark real)\n");
     print!("Seleccione: ");
     io::stdout().flush().unwrap();
 }
